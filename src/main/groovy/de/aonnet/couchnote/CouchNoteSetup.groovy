@@ -89,6 +89,6 @@ class CouchNoteSetup {
         allViews << typedefViews
         log.info "load views into couchdb ${allViews}"
 
-        couchDb.putViewsIntoCouchDb CouchNote.DESIGN_DOC_ALL, allViews
+        couchDb.updateViewsIntoCouchDb CouchNote.DESIGN_DOC_ALL, allViews
     }
 }

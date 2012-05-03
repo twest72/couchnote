@@ -11,22 +11,7 @@ class CouchNoteTypedef {
     static String VIEW_ALL_TYPEDEF = 'allTypedef'
     static List EXCLUDE_VALUE_DATA_TYPES = ['Attachment', 'AttachmentList']
 
-    private static String VIEW_ALL_TYPEDEF_MAP_FUNCTION_ALL_PROPERTIES = """
-function(doc) {
-    if(doc.type == "TYPEDEF") {
-
-        var returnValue = {};
-        for(prop in doc) {
-           if (prop.indexOf('_') != 0 && prop != 'type' ) {
-              returnValue[prop] = doc[prop];
-           }
-        }
-
-        emit( {"type_name": doc.type_name}, returnValue );
-    }
-}"""
-
-    private static String VIEW_ALL_TYPEDEF_MAP_FUNCTION = """
+    static String VIEW_ALL_TYPEDEF_MAP_FUNCTION = """
 function(doc) {
     if(doc.type == "TYPEDEF") {
 
@@ -45,8 +30,7 @@ function(doc) {
 
     private final GroovyCouchDb couchDb
 
-    @TypeChecked
-    CouchNoteTypedef(GroovyCouchDb couchDb) {
+    @TypeChecked CouchNoteTypedef(GroovyCouchDb couchDb) {
         this.couchDb = couchDb
         this.typedefs = this.loadAllTypedef()
     }
