@@ -51,29 +51,29 @@ function(doc) {
         return typedefs
     }
 
-    Map<String, Object> convertTypeInstance(String typeName, String id, Map<String, Object> value) {
+    Map<String, Object> transformTypeInstance(String typeName, String id, Map<String, Object> typeInstance) {
 
         Map<String, Object> noteTypedef = typedefs.get(typeName)
-        println "noteTypedef: $noteTypedef"
 
-        Map<String, Object> newValue = [:]
-        value.each { String fieldName, def fieldValue ->
+        Map<String, Object> newTypeInstance = [:]
+        typeInstance.each { String fieldName, def fieldValue ->
 
-            println "fieldName: $fieldName"
+            log.trace "transform field: $fieldName"
             Map<String, Object> fieldMetaData = findFieldMetaData(typeName, fieldName)
-            newValue.put(fieldName, convertTypeInstance(id, fieldName, fieldValue, fieldMetaData))
+            newTypeInstance.put(fieldName, transformField(id, fieldName, fieldValue, fieldMetaData))
         }
 
-        return newValue
+        log.debug "type instance orginal    : $typeInstance"
+        log.debug "type instance transformed: $newTypeInstance"
+
+        return newTypeInstance
     }
 
-    def convertTypeInstance(String id, String fieldName, def fieldValue, Map<String, Object> fieldMetaData) {
+    private def transformField(String id, String fieldName, def fieldValue, Map<String, Object> fieldMetaData) {
 
-        println ''
-        println "fieldMetaData: $fieldMetaData"
+        log.trace "transform field $fieldName with meta data: $fieldMetaData"
 
         String fieldDataType = fieldMetaData?.data_type
-        println "fieldDataType: $fieldDataType"
 
         def newFieldValue
         switch (fieldDataType) {
@@ -86,7 +86,7 @@ function(doc) {
 
                 newFieldValue = [:]
                 fieldValue.each {
-                    newFieldValue.put(it.key, convertTypeInstance(id, it.key, it.value, fieldMetaData.fields.get(it.key)))
+                    newFieldValue.put(it.key, transformField(id, it.key, it.value, fieldMetaData.fields.get(it.key)))
                 }
                 break
 
@@ -94,7 +94,7 @@ function(doc) {
 
                 newFieldValue = []
                 fieldValue.each {
-                    newFieldValue.add(convertTypeInstance(id, null, it, fieldMetaData.list_properties))
+                    newFieldValue.add(transformField(id, null, it, fieldMetaData.list_properties))
                 }
                 break
 
@@ -113,8 +113,9 @@ function(doc) {
                 break
         }
 
-        println "fieldValue   : $fieldValue"
-        println "newFieldValue: $newFieldValue"
+        log.trace "field orginal    : $fieldValue"
+        log.trace "field transformed: $newFieldValue"
+
         return newFieldValue
     }
 
@@ -216,7 +217,7 @@ function(doc) {
         // the view to load all entries sorted
         assert typedef.fields.size() > 0
 
-        println typedef.sort_order.getClass()
+        log.debug "sort order: ${typedef.sort_order.getClass()}"
 
         Map views = createView typedef, false, typedef.sort_order
 

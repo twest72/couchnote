@@ -127,7 +127,7 @@ class CouchNoteTypedefTest {
     }
 
     @Test
-    void testConvertTypeInstance() {
+    void testTransformTypeInstance() {
 
         CouchNoteSetup setup = new CouchNoteSetup(TestConfig.CONFIG)
         setup.prepareDb()
@@ -164,7 +164,7 @@ class CouchNoteTypedefTest {
         expectedValue.content.attachment = value.content.attachment.clone()
         expectedValue.content.attachment.link = 'http://localhost:5984/unittest/9b4e35ee261b19293cb55dd85b032a5b/e6485f1d-feff-4354-ab08-1c442bc231a6'
 
-        Map<String, Object> newValue = couchNoteTypedef.convertTypeInstance('NOTE', value._id, value)
+        Map<String, Object> newValue = couchNoteTypedef.transformTypeInstance('NOTE', value._id, value)
 
         assert newValue.toMapString() == expectedValue.toMapString()
 
