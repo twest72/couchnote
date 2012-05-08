@@ -30,18 +30,12 @@ function(doc) {
 
     private final GroovyCouchDb couchDb
 
-    @TypeChecked CouchNoteTypedef(GroovyCouchDb couchDb) {
+    @TypeChecked
+    CouchNoteTypedef(GroovyCouchDb couchDb) {
         this.couchDb = couchDb
         this.typedefs = this.loadAllTypedef()
     }
 
-    /**
-     * Load the typedef from the db
-     *
-     * @param typeName the name of the typedef
-     *
-     * @return the loaded typedef
-     */
     private Map<String, Map<String, Object>> loadAllTypedef() {
 
         Map result = couchDb.view(CouchNote.DESIGN_DOC_ALL, VIEW_ALL_TYPEDEF)
@@ -52,6 +46,36 @@ function(doc) {
         }
 
         return typedefs
+    }
+
+    Map<String, Object> findFieldMetaData(String typeName, String fieldName) {
+
+        if(!typedefs.containsKey(typeName)) {
+            return
+        }
+
+        return findFieldMetaDataImpl(fieldName, typedefs.get(typeName).fields)
+    }
+
+    private Map<String, Object> findFieldMetaDataImpl(String fieldName, Map<String, Object> fields) {
+
+        if (!fieldName || !fields) {
+            return
+        }
+
+        Map<String, Object> metaData = fields.find { it.key == fieldName }?.value
+
+        if (!metaData) {
+            List<Map<String, Object>> maps = fields.findAll { it.value.data_type == 'Map' }.collect { it.value.fields }
+            for (Map<String, Object> map : maps) {
+                metaData = findFieldMetaDataImpl(fieldName, map)
+                if(metaData) {
+                    break
+                }
+            }
+        }
+
+        return metaData
     }
 
     /**

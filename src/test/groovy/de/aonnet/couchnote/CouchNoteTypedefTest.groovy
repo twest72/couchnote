@@ -78,6 +78,54 @@ class CouchNoteTypedefTest {
         assert typedefs.toMapString() == '[NOTE:[type_name:NOTE, fields:[title:[data_type:String, required:true, sort:true, minlength:1, maxlength:255], content:[data_type:Attachment, list_properties:[data_type:String, required:true, sort:false, minlength:1, maxlength:5242880]], imported:[data_type:Datetime, required:false, sort:true], created:[data_type:Datetime, required:false, sort:true], updated:[data_type:Datetime, required:false, sort:true], tag:[data_type:List, list_properties:[data_type:String, sort:true, minlength:1, maxlength:100]], note_attributes:[data_type:Map, required:false, sort:false, import_name:note-attributes, fields:[subject_date:[data_type:Datetime, required:false, sort:true, import_name:subject-date], latitude:[data_type:BigDecimal, required:false, sort:false], longitude:[data_type:BigDecimal, required:false, sort:false], altitude:[data_type:BigDecimal, required:false, sort:false], author:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096], source:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096], source_url:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:source-url], source_application:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:source-application]]], resource:[data_type:AttachmentList, list_properties:[data_type:Map, sort:false, fields:[data:[data_type:base64, required:true, sort:false], mime:[data_type:String, required:true, sort:false, maxlength:100], width:[data_type:Integer, required:false, sort:false, min:0], height:[data_type:Integer, required:false, sort:false, min:0], resource_attributes:[data_type:Map, sort:false, import_name:resource-attributes, fields:[source_url:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:source-url], timestamp:[data_type:Datetime, required:false, sort:true], latitude:[data_type:BigDecimal, required:false, sort:false], longitude:[data_type:BigDecimal, required:false, sort:false], altitude:[data_type:BigDecimal, required:false, sort:false], camera_make:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:camera-make], camera_model:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:camera-model], reco_type:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:reco-type], file_name:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:file-name], attachment:[data_type:Boolean, required:false, sort:true]]]]]]], sort_order:[title, created, updated]], SIMPLENOTE:[type_name:SIMPLENOTE, fields:[title:[data_type:String, sort:true, required:true], description:[data_type:String]], sort_order:[title]]]'
     }
 
+    @Test
+    void testFindMetaDataSimpleInRoot() {
+
+        CouchNoteSetup setup = new CouchNoteSetup(TestConfig.CONFIG)
+        setup.prepareDb()
+
+        CouchNoteTypedef couchNoteTypedef = new CouchNoteTypedef(new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB))
+
+        Map<String, Object> metaData = couchNoteTypedef.findFieldMetaData('NOTE', 'title')
+        assert metaData.toMapString() == '[data_type:String, required:true, sort:true, minlength:1, maxlength:255]'
+    }
+
+    @Test
+    void testFindMetaDataMapInRoot() {
+
+        CouchNoteSetup setup = new CouchNoteSetup(TestConfig.CONFIG)
+        setup.prepareDb()
+
+        CouchNoteTypedef couchNoteTypedef = new CouchNoteTypedef(new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB))
+
+        Map<String, Object> metaData = couchNoteTypedef.findFieldMetaData('NOTE', 'note_attributes')
+        assert metaData.toMapString() == '[data_type:Map, required:false, sort:false, import_name:note-attributes, fields:[subject_date:[data_type:Datetime, required:false, sort:true, import_name:subject-date], latitude:[data_type:BigDecimal, required:false, sort:false], longitude:[data_type:BigDecimal, required:false, sort:false], altitude:[data_type:BigDecimal, required:false, sort:false], author:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096], source:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096], source_url:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:source-url], source_application:[data_type:String, required:false, sort:true, minlength:1, maxlength:4096, import_name:source-application]]]'
+    }
+
+    @Test
+    void testFindMetaDataListInRoot() {
+
+        CouchNoteSetup setup = new CouchNoteSetup(TestConfig.CONFIG)
+        setup.prepareDb()
+
+        CouchNoteTypedef couchNoteTypedef = new CouchNoteTypedef(new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB))
+
+        Map<String, Object> metaData = couchNoteTypedef.findFieldMetaData('NOTE', 'tag')
+        assert metaData.toMapString() == '[data_type:List, list_properties:[data_type:String, sort:true, minlength:1, maxlength:100]]'
+    }
+
+    @Test
+    void testFindMetaDataInMap() {
+
+        CouchNoteSetup setup = new CouchNoteSetup(TestConfig.CONFIG)
+        setup.prepareDb()
+
+        CouchNoteTypedef couchNoteTypedef = new CouchNoteTypedef(new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB))
+
+        Map<String, Object> metaData = couchNoteTypedef.findFieldMetaData('NOTE', 'latitude')
+        assert metaData.toMapString() == '[data_type:BigDecimal, required:false, sort:false]'
+    }
+
     @Before
     void prepareDb() {
         GroovyCouchDb couchDb = new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB)
