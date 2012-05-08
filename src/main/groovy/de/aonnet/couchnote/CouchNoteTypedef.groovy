@@ -33,8 +33,7 @@ function(doc) {
 
     private final GroovyCouchDb couchDb
 
-    @TypeChecked
-    CouchNoteTypedef(GroovyCouchDb couchDb) {
+    @TypeChecked CouchNoteTypedef(GroovyCouchDb couchDb) {
         this.couchDb = couchDb
         this.typedefs = this.loadAllTypedef()
     }
@@ -58,9 +57,9 @@ function(doc) {
         Map<String, Object> newTypeInstance = [:]
         typeInstance.each { String fieldName, def fieldValue ->
 
-            log.trace "transform field: $fieldName"
+            log.trace "transform field $fieldName with meta data: \$fieldMetaData"
             Map<String, Object> fieldMetaData = findFieldMetaData(typeName, fieldName)
-            newTypeInstance.put(fieldName, transformField(id, fieldName, fieldValue, fieldMetaData))
+            newTypeInstance.put(fieldName, transformField(id, fieldValue, fieldMetaData))
         }
 
         log.debug "type instance orginal    : $typeInstance"
@@ -69,9 +68,7 @@ function(doc) {
         return newTypeInstance
     }
 
-    private def transformField(String id, String fieldName, def fieldValue, Map<String, Object> fieldMetaData) {
-
-        log.trace "transform field $fieldName with meta data: $fieldMetaData"
+    private def transformField(String id, def fieldValue, Map<String, Object> fieldMetaData) {
 
         String fieldDataType = fieldMetaData?.data_type
 
@@ -86,7 +83,7 @@ function(doc) {
 
                 newFieldValue = [:]
                 fieldValue.each {
-                    newFieldValue.put(it.key, transformField(id, it.key, it.value, fieldMetaData.fields.get(it.key)))
+                    newFieldValue.put(it.key, transformField(id, it.value, fieldMetaData.fields.get(it.key)))
                 }
                 break
 
@@ -94,7 +91,15 @@ function(doc) {
 
                 newFieldValue = []
                 fieldValue.each {
-                    newFieldValue.add(transformField(id, null, it, fieldMetaData.list_properties))
+                    newFieldValue.add(transformField(id, it, fieldMetaData.list_properties))
+                }
+                break
+
+            case 'AttachmentList':
+
+                newFieldValue = []
+                fieldValue.each {
+                    newFieldValue.add(createLinkForAttachment(id, it))
                 }
                 break
 
@@ -123,8 +128,8 @@ function(doc) {
 
         assert fieldValue.attachment
 
-        Map<String, Object> newFieldValue = fieldValue.clone()
-        newFieldValue.attachment = fieldValue.attachment.clone()
+        Map<String, Object> newFieldValue = new HashMap(fieldValue)
+        newFieldValue.attachment = new HashMap(fieldValue.attachment)
 
         newFieldValue.attachment.link = "http://${couchDb.host}:${couchDb.port}/${couchDb.dbName}/${id}/${fieldValue.attachment.id}"
 

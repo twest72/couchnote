@@ -1,9 +1,11 @@
 package de.aonnet.couchnote
 
 import de.aonnet.gcouch.GroovyCouchDb
+import groovy.util.logging.Commons
 import org.junit.Before
 import org.junit.Test
 
+@Commons
 class CouchNoteTypedefTest {
 
     private final static Map TYPEDEF_NOTE = [
@@ -134,7 +136,6 @@ class CouchNoteTypedefTest {
 
         CouchNoteTypedef couchNoteTypedef = new CouchNoteTypedef(new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB))
 
-
         Map<String, Object> value = [
                 _id: '9b4e35ee261b19293cb55dd85b032a5b',
                 _rev: '1-129b0db122f9576a2ce49b7ef4a8e455',
@@ -160,9 +161,30 @@ class CouchNoteTypedefTest {
                         'e0164070-68ac-4c1b-925a-806faccbaf1d': [content_type: 'image/jpeg', revpos: 1, length: 2862, stub: true]
                 ]]
 
-        Map<String, Object> expectedValue = value.clone()
-        expectedValue.content.attachment = value.content.attachment.clone()
-        expectedValue.content.attachment.link = 'http://localhost:5984/unittest/9b4e35ee261b19293cb55dd85b032a5b/e6485f1d-feff-4354-ab08-1c442bc231a6'
+        Map<String, Object> expectedValue = [
+                _id: '9b4e35ee261b19293cb55dd85b032a5b',
+                _rev: '1-129b0db122f9576a2ce49b7ef4a8e455',
+                type: 'NOTE',
+                imported: '2012-04-27T11:45:16+0000',
+                title: '10 LESS CSS Examples You Should Steal for Your Projects',
+                content: [
+                        attachment: [id: 'e6485f1d-feff-4354-ab08-1c442bc231a6', link: 'http://localhost:5984/unittest/9b4e35ee261b19293cb55dd85b032a5b/e6485f1d-feff-4354-ab08-1c442bc231a6', mime: 'text/html']
+                ],
+                created: '2012-03-15T08:16:27+0000',
+                updated: '2012-03-15T08:18:18+0000',
+                tag: ['Work', 'Web', 'CSS'],
+                note_attributes: [
+                        source: 'web.clip',
+                        source_url: 'http://designshack.net/articles/css/10-less-css-examples-you-should-steal-for-your-projects/'
+                ],
+                resource: [
+                        [attachment: [id: '3617810b-4285-4c58-a474-a4a55bd01b92', height: 75, hash: 'efe6cdc70fdbfd5ee325db83228b1b6', link: 'http://localhost:5984/unittest/9b4e35ee261b19293cb55dd85b032a5b/3617810b-4285-4c58-a474-a4a55bd01b92', width: 75, mime: 'image/png']],
+                        [attachment: [id: 'e0164070-68ac-4c1b-925a-806faccbaf1d', height: 75, hash: 'fc4cad962c3038c8c76b3de6f3adf3e', link: 'http://localhost:5984/unittest/9b4e35ee261b19293cb55dd85b032a5b/e0164070-68ac-4c1b-925a-806faccbaf1d', width: 75, mime: 'image/jpeg']]],
+                _attachments: [
+                        'e6485f1d-feff-4354-ab08-1c442bc231a6': [content_type: 'text/html', revpos: 1, length: 572969, stub: true],
+                        '3617810b-4285-4c58-a474-a4a55bd01b92': [content_type: 'image/png', revpos: 1, length: 7575, stub: true],
+                        'e0164070-68ac-4c1b-925a-806faccbaf1d': [content_type: 'image/jpeg', revpos: 1, length: 2862, stub: true]
+                ]]
 
         Map<String, Object> newValue = couchNoteTypedef.transformTypeInstance('NOTE', value._id, value)
 
@@ -172,6 +194,7 @@ class CouchNoteTypedefTest {
 
     @Before
     void prepareDb() {
+
         GroovyCouchDb couchDb = new GroovyCouchDb(host: TestConfig.HOST, dbName: TestConfig.TEST_DB)
         if (couchDb.existsDb()) {
             couchDb.dropDb()
