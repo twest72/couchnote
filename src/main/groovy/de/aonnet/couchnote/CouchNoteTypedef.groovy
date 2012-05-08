@@ -2,8 +2,11 @@ package de.aonnet.couchnote
 
 import de.aonnet.gcouch.CouchDbHelper
 import de.aonnet.gcouch.GroovyCouchDb
+import groovy.json.JsonOutput
 import groovy.transform.TypeChecked
 import groovy.util.logging.Commons
+
+import java.text.ParseException
 
 @Commons
 class CouchNoteTypedef {
@@ -48,9 +51,88 @@ function(doc) {
         return typedefs
     }
 
+    Map<String, Object> convertTypeInstance(String typeName, String id, Map<String, Object> value) {
+
+        Map<String, Object> noteTypedef = typedefs.get(typeName)
+        println "noteTypedef: $noteTypedef"
+
+        Map<String, Object> newValue = [:]
+        value.each { String fieldName, def fieldValue ->
+
+            println "fieldName: $fieldName"
+            Map<String, Object> fieldMetaData = findFieldMetaData(typeName, fieldName)
+            newValue.put(fieldName, convertTypeInstance(id, fieldName, fieldValue, fieldMetaData))
+        }
+
+        return newValue
+    }
+
+    def convertTypeInstance(String id, String fieldName, def fieldValue, Map<String, Object> fieldMetaData) {
+
+        println ''
+        println "fieldMetaData: $fieldMetaData"
+
+        String fieldDataType = fieldMetaData?.data_type
+        println "fieldDataType: $fieldDataType"
+
+        def newFieldValue
+        switch (fieldDataType) {
+            case 'Attachment':
+
+                newFieldValue = createLinkForAttachment(id, fieldValue)
+                break
+
+            case 'Map':
+
+                newFieldValue = [:]
+                fieldValue.each {
+                    newFieldValue.put(it.key, convertTypeInstance(id, it.key, it.value, fieldMetaData.fields.get(it.key)))
+                }
+                break
+
+            case 'List':
+
+                newFieldValue = []
+                fieldValue.each {
+                    newFieldValue.add(convertTypeInstance(id, null, it, fieldMetaData.list_properties))
+                }
+                break
+
+            case 'String':
+
+                try {
+                    newFieldValue = JsonOutput.dateFormat.parse(fieldValue)
+                } catch (ParseException e) {
+                    newFieldValue = fieldValue
+                }
+                break
+
+            default:
+
+                newFieldValue = fieldValue
+                break
+        }
+
+        println "fieldValue   : $fieldValue"
+        println "newFieldValue: $newFieldValue"
+        return newFieldValue
+    }
+
+    private Map<String, Object> createLinkForAttachment(String id, Map<String, Object> fieldValue) {
+
+        assert fieldValue.attachment
+
+        Map<String, Object> newFieldValue = fieldValue.clone()
+        newFieldValue.attachment = fieldValue.attachment.clone()
+
+        newFieldValue.attachment.link = "http://${couchDb.host}:${couchDb.port}/${couchDb.dbName}/${id}/${fieldValue.attachment.id}"
+
+        return newFieldValue
+    }
+
     Map<String, Object> findFieldMetaData(String typeName, String fieldName) {
 
-        if(!typedefs.containsKey(typeName)) {
+        if (!typedefs.containsKey(typeName)) {
             return
         }
 
@@ -66,10 +148,13 @@ function(doc) {
         Map<String, Object> metaData = fields.find { it.key == fieldName }?.value
 
         if (!metaData) {
+
             List<Map<String, Object>> maps = fields.findAll { it.value.data_type == 'Map' }.collect { it.value.fields }
+
             for (Map<String, Object> map : maps) {
+
                 metaData = findFieldMetaDataImpl(fieldName, map)
-                if(metaData) {
+                if (metaData) {
                     break
                 }
             }
